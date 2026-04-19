@@ -4,11 +4,11 @@ import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 
 const AdminDashboard = () => {
-  const [user, setUser]           = useState(null);
-  const [loginData, setLoginData] = useState({ email: '', password: '' });
+  const [user, setUser]             = useState(null);
+  const [loginData, setLoginData]   = useState({ email: '', password: '' });
   const [quotations, setQuotations] = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [filter, setFilter]       = useState({ eventType: '', date: '' });
+  const [loading, setLoading]       = useState(true);
+  const [filter, setFilter]         = useState({ eventType: '', date: '' });
   const [expandedId, setExpandedId] = useState(null);
 
   const fetchQuotations = async () => {
@@ -45,28 +45,29 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleLogout = () => signOut(auth);
-
   const markAsContacted = async id => {
     try {
       await updateDoc(doc(db, 'quotations', id), { status: 'contacted' });
       fetchQuotations();
     } catch (err) {
-      console.error('Error updating status:', err);
+      console.error(err);
     }
   };
 
   const exportToCSV = () => {
-    const headers = ['Name','Email','Phone','Event Type','Event Date','Location','Services','Duration','Budget','Price','Status','Submitted At'];
+    const headers = ['Name','Email','Phone','Event Type','Sub Event','Event Date','Location','Services','Budget','Status','Submitted At','Special Requests'];
     const rows = quotations.map(q => [
-      q.fullName, q.email, q.phone, q.eventType, q.eventDate,
-      q.eventLocation, q.services?.join('; '), q.duration,
-      q.budgetRange, q.estimatedPrice, q.status,
+      q.fullName, q.email, q.phone,
+      q.eventType, q.subEvent || '',
+      q.eventDate, q.eventLocation,
+      q.services?.join('; '),
+      q.budgetRange, q.status,
       q.submittedAt?.toLocaleString(),
+      q.specialRequests || '',
     ]);
     const csv = [headers, ...rows].map(r => r.map(f => `"${f ?? ''}"`).join(',')).join('\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-    const a = Object.assign(document.createElement('a'), { href: url, download: 'quotations.csv' });
+    const a = Object.assign(document.createElement('a'), { href: url, download: 'nayanam-quotations.csv' });
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -77,7 +78,15 @@ const AdminDashboard = () => {
     return true;
   });
 
-  const totalValue = quotations.reduce((s, q) => s + (q.estimatedPrice || 0), 0);
+  const eventLabel = val => ({
+    wedding: 'Wedding', birthday: 'Birthday', 'half-saree': 'Half Saree / Dothi',
+    seemantham: 'Seemantham', corporate: 'Corporate', other: 'Other',
+  }[val] || val);
+
+  const subEventLabel = val => ({
+    engagement: 'Engagement', pellikuthuru: 'Pellikuthuru', pellikoduku: 'Pellikoduku',
+    haldi: 'Haldi', 'wedding-ceremony': 'Wedding Ceremony', reception: 'Reception',
+  }[val] || val);
 
   /* ── LOGIN ── */
   if (!user) {
@@ -85,31 +94,21 @@ const AdminDashboard = () => {
       <div className="ad-login-page">
         <div className="ad-login-card">
           <div className="ad-login-logo">
-            <h2>FrameStudio</h2>
+            <h2>Nayanam Stories</h2>
             <p>Admin Access Portal</p>
           </div>
           <form onSubmit={handleLogin}>
             <div className="ad-field">
               <label className="ad-label">Email Address</label>
-              <input
-                className="ad-input"
-                type="email"
-                placeholder="admin@framestudio.in"
+              <input className="ad-input" type="email" placeholder="admin@nayanamstories.in"
                 value={loginData.email}
-                onChange={e => setLoginData(p => ({ ...p, email: e.target.value }))}
-                required
-              />
+                onChange={e => setLoginData(p => ({ ...p, email: e.target.value }))} required />
             </div>
             <div className="ad-field">
               <label className="ad-label">Password</label>
-              <input
-                className="ad-input"
-                type="password"
-                placeholder="••••••••"
+              <input className="ad-input" type="password" placeholder="••••••••"
                 value={loginData.password}
-                onChange={e => setLoginData(p => ({ ...p, password: e.target.value }))}
-                required
-              />
+                onChange={e => setLoginData(p => ({ ...p, password: e.target.value }))} required />
             </div>
             <button type="submit" className="ad-btn-primary">Sign In</button>
             <div className="ad-login-footer">Secure · Firebase Authentication</div>
@@ -135,15 +134,14 @@ const AdminDashboard = () => {
   return (
     <div className="ad-page">
 
-      {/* Nav */}
       <div className="ad-nav">
         <div className="ad-nav-left">
-          <span className="ad-brand">FrameStudio</span>
+          <span className="ad-brand">Nayanam Stories</span>
           <span className="ad-badge">Admin Panel</span>
         </div>
         <div className="ad-nav-right">
           <button className="ad-btn-ghost" onClick={exportToCSV}>Export CSV</button>
-          <button className="ad-btn-danger" onClick={handleLogout}>Logout</button>
+          <button className="ad-btn-danger" onClick={() => signOut(auth)}>Logout</button>
         </div>
       </div>
 
@@ -153,7 +151,7 @@ const AdminDashboard = () => {
         <div className="ad-stats">
           <div className="ad-stat">
             <div className="ad-stat-num cream">{quotations.length}</div>
-            <div className="ad-stat-lbl">Total Quotations</div>
+            <div className="ad-stat-lbl">Total Requests</div>
           </div>
           <div className="ad-stat">
             <div className="ad-stat-num green">
@@ -169,41 +167,30 @@ const AdminDashboard = () => {
           </div>
           <div className="ad-stat">
             <div className="ad-stat-num gold">
-              ₹{totalValue >= 100000
-                ? `${(totalValue / 100000).toFixed(1)}L`
-                : totalValue.toLocaleString()}
+              {quotations.filter(q => q.eventType === 'wedding').length}
             </div>
-            <div className="ad-stat-lbl">Pipeline Value</div>
+            <div className="ad-stat-lbl">Wedding Requests</div>
           </div>
         </div>
 
         {/* Toolbar */}
         <div className="ad-toolbar">
-          <div className="ad-toolbar-title">Recent Quotations</div>
+          <div className="ad-toolbar-title">Quote Requests</div>
           <div className="ad-filters">
-            <select
-              className="ad-filter-input"
-              value={filter.eventType}
-              onChange={e => setFilter(p => ({ ...p, eventType: e.target.value }))}
-            >
-              <option value="">All Event Types</option>
+            <select className="ad-filter-input" value={filter.eventType}
+              onChange={e => setFilter(p => ({ ...p, eventType: e.target.value }))}>
+              <option value="">All Events</option>
               <option value="wedding">Wedding</option>
-              <option value="pre-wedding">Pre-Wedding</option>
               <option value="birthday">Birthday</option>
+              <option value="half-saree">Half Saree / Dothi</option>
+              <option value="seemantham">Seemantham</option>
               <option value="corporate">Corporate</option>
-              <option value="others">Others</option>
+              <option value="other">Other</option>
             </select>
-            <input
-              className="ad-filter-input"
-              type="date"
-              value={filter.date}
-              onChange={e => setFilter(p => ({ ...p, date: e.target.value }))}
-            />
+            <input className="ad-filter-input" type="date" value={filter.date}
+              onChange={e => setFilter(p => ({ ...p, date: e.target.value }))} />
             {(filter.eventType || filter.date) && (
-              <button
-                className="ad-btn-ghost"
-                onClick={() => setFilter({ eventType: '', date: '' })}
-              >
+              <button className="ad-btn-ghost" onClick={() => setFilter({ eventType: '', date: '' })}>
                 Clear
               </button>
             )}
@@ -221,7 +208,6 @@ const AdminDashboard = () => {
                   <th>Client</th>
                   <th>Event</th>
                   <th>Services</th>
-                  <th>Estimate</th>
                   <th>Status</th>
                   <th>Submitted</th>
                   <th>Actions</th>
@@ -237,20 +223,29 @@ const AdminDashboard = () => {
                         <div className="ad-cell-sub">{q.phone}</div>
                       </td>
                       <td>
-                        <div className="ad-cell-name" style={{ textTransform: 'capitalize' }}>{q.eventType}</div>
-                        <div className="ad-cell-sub">{q.eventLocation}</div>
-                        <div className="ad-cell-sub">{q.eventDate}</div>
+                        <div className="ad-cell-name">{eventLabel(q.eventType)}</div>
+                        {q.subEvent && (
+                          <div className="ad-cell-sub">{subEventLabel(q.subEvent)}</div>
+                        )}
+                        <div className="ad-cell-sub">{q.eventDate} · {q.eventLocation}</div>
                       </td>
                       <td>
-                        <div className="ad-cell-sub">
-                          {q.services?.join(' · ') || '—'}
-                        </div>
-                        <div className="ad-cell-sub" style={{ marginTop: '0.2rem' }}>
-                          {q.duration}
-                        </div>
-                      </td>
-                      <td>
-                        <div className="ad-cell-price">₹{q.estimatedPrice?.toLocaleString()}</div>
+                        {q.servicesByKey
+                          ? Object.entries(q.servicesByKey).map(([key, svcs]) => (
+                              <div key={key} className="ad-cell-sub" style={{ marginBottom: '0.2rem' }}>
+                                <span style={{ color: 'var(--gold2)' }}>
+                                  {key.replace(/-/g, ' ')}:
+                                </span>{' '}
+                                {svcs.join(', ')}
+                              </div>
+                            ))
+                          : <div className="ad-cell-sub">{q.services?.join(' · ') || '—'}</div>
+                        }
+                        {q.budgetRange && (
+                          <div className="ad-cell-sub" style={{ marginTop: '0.2rem' }}>
+                            Budget: {q.budgetRange}
+                          </div>
+                        )}
                       </td>
                       <td>
                         <span className={`ad-status ${q.status || 'pending'}`}>
@@ -259,39 +254,32 @@ const AdminDashboard = () => {
                       </td>
                       <td>
                         <div className="ad-cell-sub">
-                          {q.submittedAt?.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          {q.submittedAt?.toLocaleDateString('en-IN', {
+                            day: 'numeric', month: 'short', year: 'numeric'
+                          })}
                         </div>
                       </td>
                       <td>
                         <div className="ad-action-row">
                           {q.status !== 'contacted' && (
-                            <button
-                              className="ad-tbl-btn contact"
-                              onClick={() => markAsContacted(q.id)}
-                            >
+                            <button className="ad-tbl-btn contact"
+                              onClick={() => markAsContacted(q.id)}>
                               Mark Contacted
                             </button>
                           )}
-                          <button
-                            className="ad-tbl-btn"
-                            onClick={() => setExpandedId(expandedId === q.id ? null : q.id)}
-                          >
-                            {expandedId === q.id ? 'Hide' : 'View Details'}
+                          <button className="ad-tbl-btn"
+                            onClick={() => setExpandedId(expandedId === q.id ? null : q.id)}>
+                            {expandedId === q.id ? 'Hide' : 'Details'}
                           </button>
                         </div>
                       </td>
                     </tr>
 
-                    {/* Expanded detail row */}
                     {expandedId === q.id && (
                       <tr key={`${q.id}-detail`} className="ad-detail-row">
-                        <td colSpan={7}>
+                        <td colSpan={6}>
                           <div className="ad-detail-inner">
                             <div className="ad-detail-grid">
-                              <div>
-                                <div className="ad-detail-label">Budget Range</div>
-                                <div className="ad-detail-val">{q.budgetRange || '—'}</div>
-                              </div>
                               <div>
                                 <div className="ad-detail-label">Special Requests</div>
                                 <div className="ad-detail-val">{q.specialRequests || 'None'}</div>
@@ -301,7 +289,23 @@ const AdminDashboard = () => {
                                 <div className="ad-detail-val">
                                   {q.referenceImages?.length > 0
                                     ? `${q.referenceImages.length} image(s) uploaded`
-                                    : 'None uploaded'}
+                                    : 'None'}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="ad-detail-label">Full Services List</div>
+                                <div className="ad-detail-val">
+                                  {q.servicesByKey
+                                    ? Object.entries(q.servicesByKey).map(([key, svcs]) => (
+                                        <div key={key} style={{ marginBottom: '0.3rem' }}>
+                                          <span style={{ color: 'var(--gold2)', textTransform: 'capitalize' }}>
+                                            {key.replace(/-/g, ' ')}:
+                                          </span>{' '}
+                                          {svcs.join(', ')}
+                                        </div>
+                                      ))
+                                    : (q.services?.join(', ') || '—')
+                                  }
                                 </div>
                               </div>
                             </div>
@@ -315,7 +319,6 @@ const AdminDashboard = () => {
             </table>
           )}
         </div>
-
       </div>
     </div>
   );

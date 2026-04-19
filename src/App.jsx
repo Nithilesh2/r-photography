@@ -9,16 +9,6 @@ function App() {
         <Route path="/" element={<QuotationForm />} />
         <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
-      
-      {/* Admin Link (hidden in production) */}
-      <div className="fixed bottom-4 right-4">
-        <Link 
-          to="/admin" 
-          className="bg-gray-800 text-white px-3 py-2 rounded-md text-sm hover:bg-gray-700 transition-colors"
-        >
-          Admin
-        </Link>
-      </div>
     </Router>
   );
 }
