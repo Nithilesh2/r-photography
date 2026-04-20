@@ -145,9 +145,8 @@ const QuotationForm = () => {
     fullName: '', email: '', phone: '',
     eventType: '',
     subEvents: [],          // only used when eventType === 'wedding'
-    eventDates: {}, eventLocations: {},  // { [eventKey]: string }
+    eventDates: {}, eventTimes: {},  // { [eventKey]: string }
     servicesByKey: {},      // { [subEventValue OR eventType]: string[] }
-    budgetRange: '',
     specialRequests: '',
     referenceImages: [],
   });
@@ -174,7 +173,7 @@ const QuotationForm = () => {
   const handleInput = e => setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
 
   const setEventType = value =>
-    setFormData(p => ({ ...p, eventType: value, subEvents: [], servicesByKey: {}, eventDates: {}, eventLocations: {} }));
+    setFormData(p => ({ ...p, eventType: value, subEvents: [], servicesByKey: {}, eventDates: {}, eventTimes: {} }));
 
   const toggleSubEvent = value =>
     setFormData(p => {
@@ -184,13 +183,13 @@ const QuotationForm = () => {
       // Remove services for de-selected sub-event
       const nextServices = { ...p.servicesByKey };
       const nextDates = { ...p.eventDates };
-      const nextLocations = { ...p.eventLocations };
+      const nextTimes = { ...p.eventTimes };
       if (!next.includes(value)) {
         delete nextServices[value];
         delete nextDates[value];
-        delete nextLocations[value];
+        delete nextTimes[value];
       }
-      return { ...p, subEvents: next, servicesByKey: nextServices, eventDates: nextDates, eventLocations: nextLocations };
+      return { ...p, subEvents: next, servicesByKey: nextServices, eventDates: nextDates, eventTimes: nextTimes };
     });
 
   const toggleService = useCallback((key, svcValue) =>
@@ -205,8 +204,8 @@ const QuotationForm = () => {
   const setEventDate = useCallback((key, date) =>
     setFormData(p => ({ ...p, eventDates: { ...p.eventDates, [key]: date } })), []);
 
-  const setEventLocation = useCallback((key, location) =>
-    setFormData(p => ({ ...p, eventLocations: { ...p.eventLocations, [key]: location } })), []);
+  const setEventTime = useCallback((key, time) =>
+    setFormData(p => ({ ...p, eventTimes: { ...p.eventTimes, [key]: time } })), []);
 
   const handleFileChange = e => {
     const files = Array.from(e.target.files);
@@ -220,7 +219,7 @@ const QuotationForm = () => {
       && (!isWedding || formData.subEvents.length > 0);
     if (step === 2) return hasAllServicesSelected(
       formData.eventType, formData.subEvents, formData.servicesByKey
-    ) && serviceKeys.every(key => formData.eventDates[key] && formData.eventLocations[key]);
+    ) && serviceKeys.every(key => formData.eventDates[key] && formData.eventTimes[key]);
     return true;
   };
 
@@ -248,9 +247,8 @@ const QuotationForm = () => {
         eventType:       formData.eventType,
         subEvents:       formData.subEvents,
         eventDates:      formData.eventDates,
-        eventLocations:  formData.eventLocations,
+        eventTimes:      formData.eventTimes,
         servicesByKey:   formData.servicesByKey,
-        budgetRange:     formData.budgetRange,
         specialRequests: formData.specialRequests,
         referenceImages: imageUrls,
         submittedAt:     new Date(),
@@ -272,18 +270,18 @@ const QuotationForm = () => {
   );
 
   /* ── ServiceBlock: reusable services selector for one event key ── */
-  const ServiceBlock = React.memo(({ eventKey, title, selected, eventDate, eventLocation, onToggleService, onSetDate, onSetLocation }) => {
+  const ServiceBlock = React.memo(({ eventKey, title, selected, eventDate, eventTime, onToggleService, onSetDate, onSetTime }) => {
     const services = SERVICES_MAP[eventKey] || [];
     const dateRef = useRef();
-    const locationRef = useRef();
+    const timeRef = useRef();
 
     useEffect(() => {
       if (dateRef.current) dateRef.current.value = eventDate;
     }, [eventDate]);
 
     useEffect(() => {
-      if (locationRef.current) locationRef.current.value = eventLocation;
-    }, [eventLocation]);
+      if (timeRef.current) timeRef.current.value = eventTime;
+    }, [eventTime]);
 
     return (
       <div className="qf-svc-block">
@@ -319,10 +317,10 @@ const QuotationForm = () => {
               onBlur={() => onSetDate(eventKey, dateRef.current.value)} />
           </div>
           <div className="qf-field">
-            <label className="qf-label">Event Location *</label>
-            <input className="qf-input" type="text" ref={locationRef}
-              onBlur={() => onSetLocation(eventKey, locationRef.current.value)}
-              placeholder="City, State" />
+            <label className="qf-label">Event Time *</label>
+            <input className="qf-input" type="time" ref={timeRef}
+              onBlur={() => onSetTime(eventKey, timeRef.current.value)}
+              placeholder="HH:MM" />
           </div>
         </div>
       </div>
@@ -363,6 +361,10 @@ const QuotationForm = () => {
         <div className="qf-eyebrow">Welcome to Nayanam Stories</div>
         <h1 className="qf-hero-title">Nayanam <em>Stories</em></h1>
         <p className="qf-hero-sub">Creative Wedding &amp; Event Photography<br/>Choose your event and build your photography package.</p>
+        <div className="qf-hero-links">
+          <a href="https://harikrishnamamidala146.wfolio.pro/disk/portfolio" target="_blank" rel="noopener noreferrer">Portfolio</a>
+          <a href="https://www.instagram.com/nayanam.stories?igsh=bDM2YnB0aGYyNWt1" target="_blank" rel="noopener noreferrer">Instagram</a>
+        </div>
       </div>
 
       <div className="qf-wrap">
@@ -400,7 +402,7 @@ const QuotationForm = () => {
                   <div className="qf-field">
                     <label className="qf-label">Phone Number *</label>
                     <input className="qf-input" type="tel" name="phone"
-                      value={formData.phone} onChange={handleInput} placeholder="+91 98765 43210" />
+                      value={formData.phone} maxLength={10} onChange={handleInput} placeholder="+91 98765 43210" />
                   </div>
                 </div>
               </>
@@ -468,20 +470,12 @@ const QuotationForm = () => {
                     : selectedEvent?.label;
                   const selected = formData.servicesByKey[key] || [];
                   const eventDate = formData.eventDates[key] || '';
-                  const eventLocation = formData.eventLocations[key] || '';
+                  const eventTime = formData.eventTimes[key] || '';
                   return (
-                    <ServiceBlock key={key} eventKey={key} title={label || key} selected={selected} eventDate={eventDate} eventLocation={eventLocation} onToggleService={toggleService} onSetDate={setEventDate} onSetLocation={setEventLocation} />
+                    <ServiceBlock key={key} eventKey={key} title={label || key} selected={selected} eventDate={eventDate} eventTime={eventTime} onToggleService={toggleService} onSetDate={setEventDate} onSetTime={setEventTime} />
                   );
                 })}
 
-                <div className="qf-field" style={{ marginTop: '1.75rem' }}>
-                  <label className="qf-label">Budget Range</label>
-                  <select className="qf-input" name="budgetRange"
-                    value={formData.budgetRange} onChange={handleInput}>
-                    <option value="">Select your budget</option>
-                    {BUDGET_RANGES.map(r => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                </div>
               </>
             )}
 
@@ -529,18 +523,12 @@ const QuotationForm = () => {
                           {svcLabels.join(' · ')}
                           <br />
                           <small style={{ color: 'var(--gold2)' }}>
-                            {formData.eventDates[key]} · {formData.eventLocations[key]}
+                            {formData.eventDates[key]} · {formData.eventTimes[key]}
                           </small>
                         </span>
                       </div>
                     );
                   })}
-
-                  {formData.budgetRange && (
-                    <div className="qf-price-row">
-                      <span>Budget</span><span>{formData.budgetRange}</span>
-                    </div>
-                  )}
                 </div>
 
                 <div className="qf-divider" />

@@ -8,8 +8,16 @@ const AdminDashboard = () => {
   const [loginData, setLoginData]   = useState({ email: '', password: '' });
   const [quotations, setQuotations] = useState([]);
   const [loading, setLoading]       = useState(true);
-  const [filter, setFilter]         = useState({ eventType: '', date: '' });
+  const [filter, setFilter]         = useState({ eventType: '', date: '', status: '' });
   const [expandedId, setExpandedId] = useState(null);
+  const [theme, setTheme]           = useState(() => localStorage.getItem('theme') || 'dark');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
 
   const fetchQuotations = async () => {
     try {
@@ -75,6 +83,8 @@ const AdminDashboard = () => {
   const filtered = quotations.filter(q => {
     if (filter.eventType && q.eventType !== filter.eventType) return false;
     if (filter.date && q.eventDate !== filter.date) return false;
+    if (filter.status === 'contacted' && q.status !== 'contacted') return false;
+    if (filter.status === 'pending' && q.status === 'contacted') return false;
     return true;
   });
 
@@ -92,6 +102,11 @@ const AdminDashboard = () => {
   if (!user) {
     return (
       <div className="ad-login-page">
+        <div style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
+          <button className="ad-btn-ghost" onClick={toggleTheme} style={{ fontSize: '1.2rem', padding: '0.4rem 0.6rem' }}>
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+        </div>
         <div className="ad-login-card">
           <div className="ad-login-logo">
             <h2>Nayanam Stories</h2>
@@ -140,6 +155,9 @@ const AdminDashboard = () => {
           <span className="ad-badge">Admin Panel</span>
         </div>
         <div className="ad-nav-right">
+          <button className="ad-btn-ghost" onClick={toggleTheme} title="Toggle Theme" style={{ fontSize: '1.2rem', padding: '0.4rem 0.6rem' }}>
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
           <button className="ad-btn-ghost" onClick={exportToCSV}>Export CSV</button>
           <button className="ad-btn-danger" onClick={() => signOut(auth)}>Logout</button>
         </div>
@@ -177,6 +195,12 @@ const AdminDashboard = () => {
         <div className="ad-toolbar">
           <div className="ad-toolbar-title">Quote Requests</div>
           <div className="ad-filters">
+            <select className="ad-filter-input" value={filter.status || ''}
+              onChange={e => setFilter(p => ({ ...p, status: e.target.value }))}>
+              <option value="">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="contacted">Contacted</option>
+            </select>
             <select className="ad-filter-input" value={filter.eventType}
               onChange={e => setFilter(p => ({ ...p, eventType: e.target.value }))}>
               <option value="">All Events</option>
@@ -189,8 +213,8 @@ const AdminDashboard = () => {
             </select>
             <input className="ad-filter-input" type="date" value={filter.date}
               onChange={e => setFilter(p => ({ ...p, date: e.target.value }))} />
-            {(filter.eventType || filter.date) && (
-              <button className="ad-btn-ghost" onClick={() => setFilter({ eventType: '', date: '' })}>
+            {(filter.eventType || filter.date || filter.status) && (
+              <button className="ad-btn-ghost" onClick={() => setFilter({ eventType: '', date: '', status: '' })}>
                 Clear
               </button>
             )}
