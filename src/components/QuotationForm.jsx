@@ -225,7 +225,6 @@ const QuotationForm = () => {
 
   const handleSubmit = async () => {
     if (!canAdvance()) return;
-    // Check all dates are not in the past
     for (const date of Object.values(formData.eventDates)) {
       if (date && new Date(date) < new Date()) {
         alert('Event date cannot be in the past'); return;
@@ -233,13 +232,29 @@ const QuotationForm = () => {
     }
     setLoading(true);
     try {
+      const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+      const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
       const imageUrls = await Promise.all(
         formData.referenceImages.map(async file => {
-          const storRef = ref(storage, `reference-images/${Date.now()}-${file.name}`);
-          await uploadBytes(storRef, file);
-          return getDownloadURL(storRef);
+          const fd = new FormData();
+          fd.append('file', file);
+          fd.append('upload_preset', UPLOAD_PRESET);
+          
+          const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+            method: 'POST',
+            body: fd,
+          });
+          
+          if (!res.ok) {
+            throw new Error('Failed to upload image to Cloudinary');
+          }
+          
+          const data = await res.json();
+          return data.secure_url;
         })
       );
+
       await addDoc(collection(db, 'quotations'), {
         fullName:        formData.fullName,
         email:           formData.email,

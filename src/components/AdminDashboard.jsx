@@ -312,7 +312,15 @@ const AdminDashboard = () => {
                                 <div className="ad-detail-label">Reference Images</div>
                                 <div className="ad-detail-val">
                                   {q.referenceImages?.length > 0
-                                    ? `${q.referenceImages.length} image(s) uploaded`
+                                    ? (
+                                      <div className="ad-ref-images">
+                                        {q.referenceImages.map((url, i) => (
+                                          <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="ad-ref-img-link">
+                                            <img src={url} alt={`Reference ${i+1}`} className="ad-ref-img" />
+                                          </a>
+                                        ))}
+                                      </div>
+                                    )
                                     : 'None'}
                                 </div>
                               </div>

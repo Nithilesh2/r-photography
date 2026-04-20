@@ -4,13 +4,13 @@ import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDc3gGZ-VmI-XQxzvP2P0FctF7ESAv1vW0",
-  authDomain: "photography-c52f5.firebaseapp.com",
-  projectId: "photography-c52f5",
-  storageBucket: "photography-c52f5.firebasestorage.app",
-  messagingSenderId: "855807359130",
-  appId: "1:855807359130:web:75a48a460d8a868aaf0723",
-  measurementId: "G-QFFV16WT7S"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase

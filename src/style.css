@@ -456,7 +456,7 @@ body {
   white-space: nowrap;
   flex-shrink: 0;
 }
-.qf-price-row span:last-child { color: var(--cream); text-align: right; }
+.qf-price-row span:last-child { color: var(--gold); text-align: right; }
 .qf-price-services { color: var(--gold2) !important; line-height: 1.5; }
 
 /* ── Divider ── */
@@ -541,7 +541,7 @@ body {
 /* ── Success ── */
 .qf-success-page {
   min-height: 100vh;
-  background: var(--ink);
+  background: var(--mono);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -576,7 +576,7 @@ body {
   font-family: var(--serif);
   font-size: 2.2rem;
   font-weight: 300;
-  color: var(--cream);
+  color: var(--gold);
   margin-bottom: 0.75rem;
 }
 .qf-success-body { font-size: 0.88rem; color: var(--muted-text); line-height: 1.8; margin-bottom: 2rem; }
@@ -823,6 +823,32 @@ body {
   margin-bottom: 0.35rem;
 }
 .ad-detail-val { font-size: 0.85rem; color: var(--cream); line-height: 1.5; }
+
+/* Reference Images */
+.ad-ref-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.ad-ref-img-link {
+  display: block;
+  width: 60px;
+  height: 60px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(184,146,74,0.3);
+  transition: border-color 0.2s, transform 0.2s;
+}
+.ad-ref-img-link:hover {
+  border-color: var(--gold);
+  transform: scale(1.05);
+}
+.ad-ref-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 .ad-empty {
   padding: 3rem;
