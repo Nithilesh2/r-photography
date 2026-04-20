@@ -2,10 +2,8 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { db, storage } from '../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-
-/* ══════════════════════════════════════════
-   DATA — Nayanam Stories
-   ══════════════════════════════════════════ */
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const EVENT_TYPES = [
   { value: 'wedding',    label: 'Wedding',                icon: '💍' },
@@ -25,9 +23,7 @@ const WEDDING_SUB_EVENTS = [
   { value: 'reception',        label: 'Reception'        },
 ];
 
-// Services per context
 const SERVICES_MAP = {
-  // Wedding sub-events
   'engagement':       [
     { value: 'traditional-photo', label: 'Traditional Photo',   icon: '📷' },
     { value: 'traditional-video', label: 'Traditional Video',   icon: '🎬' },
@@ -120,12 +116,6 @@ const BUDGET_RANGES = [
 
 const STEPS = ['Details', 'Event', 'Services', 'Review'];
 
-/* ══════════════════════════════════════════
-   HELPERS
-   ══════════════════════════════════════════ */
-
-// servicesByKey: { [eventKey]: string[] }
-// eventKey = sub-event value for wedding, or eventType for others
 function hasAllServicesSelected(eventType, subEvents, servicesByKey) {
   if (eventType === 'wedding') {
     if (subEvents.length === 0) return false;
@@ -134,9 +124,6 @@ function hasAllServicesSelected(eventType, subEvents, servicesByKey) {
   return (servicesByKey[eventType] || []).length > 0;
 }
 
-/* ══════════════════════════════════════════
-   COMPONENT
-   ══════════════════════════════════════════ */
 
 const QuotationForm = () => {
   const [step, setStep] = useState(0);
@@ -144,9 +131,9 @@ const QuotationForm = () => {
   const [formData, setFormData] = useState({
     fullName: '', email: '', phone: '',
     eventType: '',
-    subEvents: [],          // only used when eventType === 'wedding'
-    eventDates: {}, eventTimes: {},  // { [eventKey]: string }
-    servicesByKey: {},      // { [subEventValue OR eventType]: string[] }
+    subEvents: [],          
+    eventDates: {}, eventTimes: {}, 
+    servicesByKey: {}, 
     specialRequests: '',
     referenceImages: [],
   });
@@ -163,13 +150,10 @@ const QuotationForm = () => {
   const isWedding     = formData.eventType === 'wedding';
   const selectedEvent = EVENT_TYPES.find(e => e.value === formData.eventType);
 
-  // For non-wedding: which keys to show services for
-  // For wedding: use the subEvents array
   const serviceKeys = isWedding
     ? formData.subEvents
     : (formData.eventType ? [formData.eventType] : []);
 
-  /* ── handlers ── */
   const handleInput = e => setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
 
   const setEventType = value =>
@@ -269,6 +253,10 @@ const QuotationForm = () => {
         submittedAt:     new Date(),
         status:          'pending',
       });
+      
+      // Auto-download PDF on success
+      generatePDF();
+      
       setSubmitted(true);
     } catch (err) {
       console.error(err);
@@ -276,6 +264,64 @@ const QuotationForm = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    
+    doc.setFontSize(22);
+    doc.setTextColor(184, 146, 74); // Gold
+    doc.text('Nayanam Stories - Quote Request', 14, 22);
+    
+    doc.setFontSize(11);
+    doc.setTextColor(60, 60, 60);
+    doc.text(`Name: ${formData.fullName}`, 14, 34);
+    doc.text(`Phone: ${formData.phone}`, 14, 40);
+    doc.text(`Email: ${formData.email}`, 14, 46);
+    
+    const eventName = EVENT_TYPES.find(e => e.value === formData.eventType)?.label || formData.eventType;
+    doc.text(`Event Category: ${eventName}`, 14, 56);
+    
+    let y = 66;
+    
+    const tableData = [];
+    serviceKeys.forEach(key => {
+      const keyLabel = isWedding
+        ? WEDDING_SUB_EVENTS.find(s => s.value === key)?.label
+        : EVENT_TYPES.find(e => e.value === key)?.label || key;
+      
+      const svcs = formData.servicesByKey[key] || [];
+      const svcLabels = svcs.map(sv => (SERVICES_MAP[key] || []).find(s => s.value === sv)?.label).filter(Boolean).join(', ');
+      
+      const date = formData.eventDates[key] || 'N/A';
+      const time = formData.eventTimes[key] || 'N/A';
+      
+      tableData.push([keyLabel || key, svcLabels || 'None', date, time]);
+    });
+    
+    autoTable(doc, {
+      startY: y,
+      head: [['Event / Sub-Event', 'Services Required', 'Date', 'Time']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [184, 146, 74] }, // Nayanam Gold
+      styles: { fontSize: 10 }
+    });
+    
+    const finalY = doc.lastAutoTable.finalY || y;
+    
+    if (formData.specialRequests) {
+      doc.setFontSize(12);
+      doc.setTextColor(184, 146, 74);
+      doc.text('Special Requests:', 14, finalY + 12);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(80, 80, 80);
+      const splitText = doc.splitTextToSize(formData.specialRequests, 180);
+      doc.text(splitText, 14, finalY + 18);
+    }
+    
+    doc.save(`Nayanam_Quote_${formData.fullName.replace(/\s+/g, '_')}.pdf`);
   };
 
   const Check = () => (
@@ -358,9 +404,14 @@ const QuotationForm = () => {
             Thank you for choosing Nayanam Stories.<br/>
             Let’s create beautiful memories together.
           </p>
-          <button className="qf-btn-ghost" onClick={() => window.location.reload()}>
-            Submit Another Request
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <button className="qf-btn-primary" onClick={generatePDF}>
+              Download Quote PDF
+            </button>
+            <button className="qf-btn-ghost" onClick={() => window.location.reload()}>
+              Submit Another Request
+            </button>
+          </div>
         </div>
       </div>
     );

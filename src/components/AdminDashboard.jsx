@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { db, auth } from '../firebase';
-import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import emailjs from '@emailjs/browser';
 
 const AdminDashboard = () => {
   const [user, setUser]             = useState(null);
@@ -10,6 +11,7 @@ const AdminDashboard = () => {
   const [loading, setLoading]       = useState(true);
   const [filter, setFilter]         = useState({ eventType: '', date: '', status: '' });
   const [expandedId, setExpandedId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [theme, setTheme]           = useState(() => localStorage.getItem('theme') || 'dark');
 
   useEffect(() => {
@@ -59,6 +61,37 @@ const AdminDashboard = () => {
       fetchQuotations();
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const deleteQuotation = async (q) => {
+    if (window.confirm(`Are you sure you want to reject and delete this quote request? An email will be sent to ${q.email}.`)) {
+      setDeletingId(q.id);
+      try {
+        const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+        const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+        const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
+        if (serviceId && templateId && publicKey && serviceId !== 'YOUR_SERVICE_ID') {
+          const templateParams = {
+            to_name: q.fullName,
+            to_email: q.email,
+            event_type: q.eventType === 'wedding' ? 'Wedding' : (q.eventType || 'Event')
+          };
+          await emailjs.send(serviceId, templateId, templateParams, publicKey);
+        } else {
+          console.warn('EmailJS not configured. Quotation will be deleted without sending email.');
+        }
+
+        // Delete from Firestore
+        await deleteDoc(doc(db, 'quotations', q.id));
+        await fetchQuotations();
+      } catch (err) {
+        console.error(err);
+        alert('Failed to delete or send email: ' + err.message);
+      } finally {
+        setDeletingId(null);
+      }
     }
   };
 
@@ -294,6 +327,12 @@ const AdminDashboard = () => {
                           <button className="ad-tbl-btn"
                             onClick={() => setExpandedId(expandedId === q.id ? null : q.id)}>
                             {expandedId === q.id ? 'Hide' : 'Details'}
+                          </button>
+                          <button className="ad-tbl-btn delete"
+                            onClick={() => deleteQuotation(q)}
+                            disabled={deletingId === q.id}
+                            style={{ opacity: deletingId === q.id ? 0.6 : 1, cursor: deletingId === q.id ? 'not-allowed' : 'pointer' }}>
+                            {deletingId === q.id ? 'Deleting...' : 'Delete'}
                           </button>
                         </div>
                       </td>

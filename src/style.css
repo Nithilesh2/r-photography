@@ -800,6 +800,7 @@ body {
 }
 .ad-tbl-btn:hover         { border-color: var(--gold); color: var(--gold); }
 .ad-tbl-btn.contact:hover { border-color: var(--green); color: var(--green); }
+.ad-tbl-btn.delete:hover  { border-color: var(--red); color: var(--red); }
 
 /* Detail row */
 .ad-detail-row td {
@@ -1018,6 +1019,7 @@ body {
 }
 [data-theme="light"] .ad-tbl-btn:hover         { border-color: var(--gold); color: var(--gold); }
 [data-theme="light"] .ad-tbl-btn.contact:hover { border-color: var(--green); color: #5a8c22; }
+[data-theme="light"] .ad-tbl-btn.delete:hover  { border-color: var(--red); color: #c0544e; }
 
 /* Detail row */
 [data-theme="light"] .ad-detail-row td {
