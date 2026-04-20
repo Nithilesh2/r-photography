@@ -244,8 +244,28 @@ const AdminDashboard = () => {
               <option value="corporate">Corporate</option>
               <option value="other">Other</option>
             </select>
-            <input className="ad-filter-input" type="date" value={filter.date}
-              onChange={e => setFilter(p => ({ ...p, date: e.target.value }))} />
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input className="ad-filter-input" type="date" value={filter.date}
+                onChange={e => setFilter(p => ({ ...p, date: e.target.value }))} />
+              {!filter.date && (
+                <div style={{
+                  position: 'absolute',
+                  left: '1px',
+                  right: '2rem',
+                  top: '1px',
+                  bottom: '1px',
+                  background: 'var(--card-bg)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  paddingLeft: '1rem',
+                  color: '#777',
+                  pointerEvents: 'none',
+                  borderRadius: '4px 0 0 4px'
+                }}>
+                  Select Date
+                </div>
+              )}
+            </div>
             {(filter.eventType || filter.date || filter.status) && (
               <button className="ad-btn-ghost" onClick={() => setFilter({ eventType: '', date: '', status: '' })}>
                 Clear

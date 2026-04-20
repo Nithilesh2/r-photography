@@ -375,12 +375,12 @@ const QuotationForm = () => {
           <div className="qf-field">
             <label className="qf-label">Event Date *</label>
             <input className="qf-input" type="date" ref={dateRef}
-              onBlur={() => onSetDate(eventKey, dateRef.current.value)} />
+              onChange={() => onSetDate(eventKey, dateRef.current.value)} />
           </div>
           <div className="qf-field">
             <label className="qf-label">Event Time *</label>
             <input className="qf-input" type="time" ref={timeRef}
-              onBlur={() => onSetTime(eventKey, timeRef.current.value)}
+              onChange={() => onSetTime(eventKey, timeRef.current.value)}
               placeholder="HH:MM" />
           </div>
         </div>
