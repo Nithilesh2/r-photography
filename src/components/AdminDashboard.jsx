@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { db, auth } from '../firebase';
-import { collection, getDocs, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, updateDoc, doc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import emailjs from '@emailjs/browser';
 
@@ -21,29 +21,35 @@ const AdminDashboard = () => {
 
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
 
-  const fetchQuotations = async () => {
-    try {
-      const snap = await getDocs(collection(db, 'quotations'));
-      const quotes = snap.docs.map(d => ({
-        id: d.id,
-        ...d.data(),
-        submittedAt: d.data().submittedAt?.toDate(),
-      }));
-      setQuotations(quotes);
-    } catch (err) {
-      console.error('Error fetching quotations:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, u => {
+    let unsubQuotes = null;
+
+    const unsubAuth = onAuthStateChanged(auth, u => {
       setUser(u);
-      if (u) fetchQuotations();
-      else setLoading(false);
+      if (u) {
+        unsubQuotes = onSnapshot(collection(db, 'quotations'), (snap) => {
+          const quotes = snap.docs.map(d => ({
+            id: d.id,
+            ...d.data(),
+            submittedAt: d.data().submittedAt?.toDate(),
+          })).sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0));
+          setQuotations(quotes);
+          setLoading(false);
+        }, (err) => {
+          console.error('Error fetching quotations:', err);
+          setLoading(false);
+        });
+      } else {
+        if (unsubQuotes) unsubQuotes();
+        setQuotations([]);
+        setLoading(false);
+      }
     });
-    return unsub;
+
+    return () => {
+      unsubAuth();
+      if (unsubQuotes) unsubQuotes();
+    };
   }, []);
 
   const handleLogin = async e => {
@@ -58,7 +64,6 @@ const AdminDashboard = () => {
   const markAsContacted = async id => {
     try {
       await updateDoc(doc(db, 'quotations', id), { status: 'contacted' });
-      fetchQuotations();
     } catch (err) {
       console.error(err);
     }
@@ -78,17 +83,21 @@ const AdminDashboard = () => {
             to_email: q.email,
             event_type: q.eventType === 'wedding' ? 'Wedding' : (q.eventType || 'Event')
           };
-          await emailjs.send(serviceId, templateId, templateParams, publicKey);
+          try {
+            await emailjs.send(serviceId, templateId, templateParams, publicKey);
+          } catch (emailErr) {
+            console.error('Failed to send rejection email:', emailErr);
+            alert(`Could not send rejection email to ${q.email} (it might be invalid). The request will still be deleted.`);
+          }
         } else {
           console.warn('EmailJS not configured. Quotation will be deleted without sending email.');
         }
 
         // Delete from Firestore
         await deleteDoc(doc(db, 'quotations', q.id));
-        await fetchQuotations();
       } catch (err) {
         console.error(err);
-        alert('Failed to delete or send email: ' + err.message);
+        alert('Failed to delete: ' + (err?.message || err?.text || 'Unknown error'));
       } finally {
         setDeletingId(null);
       }
@@ -96,13 +105,10 @@ const AdminDashboard = () => {
   };
 
   const exportToCSV = () => {
-    const headers = ['Name','Email','Phone','Event Type','Sub Event','Event Date','Location','Services','Budget','Status','Submitted At','Special Requests'];
+    const headers = ['Name','Email','Phone','Event Type','Status','Submitted At','Special Requests'];
     const rows = quotations.map(q => [
       q.fullName, q.email, q.phone,
-      q.eventType, q.subEvent || '',
-      q.eventDate, q.eventLocation,
-      q.services?.join('; '),
-      q.budgetRange, q.status,
+      q.eventType, q.status,
       q.submittedAt?.toLocaleString(),
       q.specialRequests || '',
     ]);
@@ -284,7 +290,7 @@ const AdminDashboard = () => {
                 <tr>
                   <th>Client</th>
                   <th>Event</th>
-                  <th>Services</th>
+                  <th>Booked Date</th>
                   <th>Status</th>
                   <th>Submitted</th>
                   <th>Actions</th>
@@ -304,25 +310,19 @@ const AdminDashboard = () => {
                         {q.subEvent && (
                           <div className="ad-cell-sub">{subEventLabel(q.subEvent)}</div>
                         )}
-                        <div className="ad-cell-sub">{q.eventDate} · {q.eventLocation}</div>
                       </td>
                       <td>
                         {q.servicesByKey
-                          ? Object.entries(q.servicesByKey).map(([key, svcs]) => (
+                          ? Object.keys(q.servicesByKey).map(key => (
                               <div key={key} className="ad-cell-sub" style={{ marginBottom: '0.2rem' }}>
-                                <span style={{ color: 'var(--gold2)' }}>
+                                <span style={{ color: 'var(--gold2)', textTransform: 'capitalize' }}>
                                   {key.replace(/-/g, ' ')}:
                                 </span>{' '}
-                                {svcs.join(', ')}
+                                {q.eventDates?.[key] || 'TBD'} {q.eventTimes?.[key] ? `at ${q.eventTimes[key]}` : ''}
                               </div>
                             ))
-                          : <div className="ad-cell-sub">{q.services?.join(' · ') || '—'}</div>
+                          : <div className="ad-cell-sub">{q.eventDate || 'TBD'} {q.eventTime ? `at ${q.eventTime}` : ''}</div>
                         }
-                        {q.budgetRange && (
-                          <div className="ad-cell-sub" style={{ marginTop: '0.2rem' }}>
-                            Budget: {q.budgetRange}
-                          </div>
-                        )}
                       </td>
                       <td>
                         <span className={`ad-status ${q.status || 'pending'}`}>

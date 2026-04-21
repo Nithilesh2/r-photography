@@ -6,113 +6,105 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 const EVENT_TYPES = [
-  { value: 'wedding',    label: 'Wedding',                icon: '💍' },
-  { value: 'birthday',   label: 'Birthday',               icon: '🎂' },
-  { value: 'half-saree', label: 'Half Saree / Dothi Ceremony',     icon: '🌸' },
-  { value: 'seemantham', label: 'Seemantham',              icon: '🪷' },
-  { value: 'corporate',  label: 'Corporate Events',       icon: '💼' },
-  { value: 'other',      label: 'Other Events',           icon: '✨' },
+  { value: 'wedding', label: 'Wedding', icon: '💍' },
+  { value: 'birthday', label: 'Birthday', icon: '🎂' },
+  { value: 'half-saree', label: 'Half Saree / Dothi Ceremony', icon: '🌸' },
+  { value: 'seemantham', label: 'Seemantham', icon: '🪷' },
+  { value: 'corporate', label: 'Corporate Events', icon: '💼' },
+  { value: 'other', label: 'Other Events', icon: '✨' },
 ];
 
 const WEDDING_SUB_EVENTS = [
-  { value: 'engagement',       label: 'Engagement'       },
-  { value: 'pellikuthuru',     label: 'Pellikuthuru'     },
-  { value: 'pellikoduku',      label: 'Pellikoduku'      },
-  { value: 'haldi',            label: 'Haldi'            },
+  { value: 'engagement', label: 'Engagement' },
+  { value: 'pellikuthuru', label: 'Pellikuthuru' },
+  { value: 'pellikoduku', label: 'Pellikoduku' },
+  { value: 'haldi', label: 'Haldi' },
   { value: 'wedding-ceremony', label: 'Wedding Ceremony' },
-  { value: 'reception',        label: 'Reception'        },
+  { value: 'reception', label: 'Reception' },
 ];
 
 const SERVICES_MAP = {
-  'engagement':       [
-    { value: 'traditional-photo', label: 'Traditional Photo',   icon: '📷' },
-    { value: 'traditional-video', label: 'Traditional Video',   icon: '🎬' },
-    { value: 'cinematic-video',   label: 'Cinematic Video',     icon: '🎥' },
-    { value: 'candid-photo',      label: 'Candid Photo',        icon: '📸' },
-    { value: 'drone',             label: 'Drone',               icon: '🚁' },
-    { value: 'extra-services',    label: 'Extra Services',      icon: '⭐' },
+  'engagement': [
+    { value: 'traditional-photo', label: 'Traditional Photo', icon: '📷' },
+    { value: 'traditional-video', label: 'Traditional Video', icon: '🎬' },
+    { value: 'cinematic-video', label: 'Cinematic Video', icon: '🎥' },
+    { value: 'candid-photo', label: 'Candid Photo', icon: '📸' },
+    { value: 'drone', label: 'Drone', icon: '🚁' },
+    { value: 'extra-services', label: 'Extra Services', icon: '⭐' },
   ],
-  'pellikuthuru':     [
-    { value: 'traditional-photo', label: 'Traditional Photo',   icon: '📷' },
-    { value: 'traditional-video', label: 'Traditional Video',   icon: '🎬' },
-    { value: 'cinematic-video',   label: 'Cinematic Video',     icon: '🎥' },
-    { value: 'candid-photo',      label: 'Candid Photo',        icon: '📸' },
-    { value: 'drone',             label: 'Drone',               icon: '🚁' },
+  'pellikuthuru': [
+    { value: 'traditional-photo', label: 'Traditional Photo', icon: '📷' },
+    { value: 'traditional-video', label: 'Traditional Video', icon: '🎬' },
+    { value: 'cinematic-video', label: 'Cinematic Video', icon: '🎥' },
+    { value: 'candid-photo', label: 'Candid Photo', icon: '📸' },
+    { value: 'drone', label: 'Drone', icon: '🚁' },
   ],
-  'pellikoduku':      [
-    { value: 'traditional-photo', label: 'Traditional Photo',   icon: '📷' },
-    { value: 'traditional-video', label: 'Traditional Video',   icon: '🎬' },
-    { value: 'cinematic-video',   label: 'Cinematic Video',     icon: '🎥' },
-    { value: 'candid-photo',      label: 'Candid Photo',        icon: '📸' },
-    { value: 'drone',             label: 'Drone',               icon: '🚁' },
+  'pellikoduku': [
+    { value: 'traditional-photo', label: 'Traditional Photo', icon: '📷' },
+    { value: 'traditional-video', label: 'Traditional Video', icon: '🎬' },
+    { value: 'cinematic-video', label: 'Cinematic Video', icon: '🎥' },
+    { value: 'candid-photo', label: 'Candid Photo', icon: '📸' },
+    { value: 'drone', label: 'Drone', icon: '🚁' },
   ],
-  'haldi':            [
-    { value: 'traditional-photo', label: 'Traditional Photo',   icon: '📷' },
-    { value: 'traditional-video', label: 'Traditional Video',   icon: '🎬' },
-    { value: 'cinematic-video',   label: 'Cinematic Video',     icon: '🎥' },
-    { value: 'candid-photo',      label: 'Candid Photo',        icon: '📸' },
-    { value: 'drone',             label: 'Drone',               icon: '🚁' },
+  'haldi': [
+    { value: 'traditional-photo', label: 'Traditional Photo', icon: '📷' },
+    { value: 'traditional-video', label: 'Traditional Video', icon: '🎬' },
+    { value: 'cinematic-video', label: 'Cinematic Video', icon: '🎥' },
+    { value: 'candid-photo', label: 'Candid Photo', icon: '📸' },
+    { value: 'drone', label: 'Drone', icon: '🚁' },
   ],
   'wedding-ceremony': [
-    { value: 'traditional-photo', label: 'Traditional Photo',   icon: '📷' },
-    { value: 'traditional-video', label: 'Traditional Video',   icon: '🎬' },
-    { value: 'cinematic-video',   label: 'Cinematic Video',     icon: '🎥' },
-    { value: 'candid-photo',      label: 'Candid Photography',  icon: '📸' },
-    { value: 'drone',             label: 'Drone Coverage',      icon: '🚁' },
-    { value: 'album-design',      label: 'Album Design',        icon: '📒' },
+    { value: 'traditional-photo', label: 'Traditional Photo', icon: '📷' },
+    { value: 'traditional-video', label: 'Traditional Video', icon: '🎬' },
+    { value: 'cinematic-video', label: 'Cinematic Video', icon: '🎥' },
+    { value: 'candid-photo', label: 'Candid Photography', icon: '📸' },
+    { value: 'drone', label: 'Drone Coverage', icon: '🚁' },
+    { value: 'album-design', label: 'Album Design', icon: '📒' },
   ],
-  'reception':        [
-    { value: 'traditional-photo',    label: 'Traditional Photo',    icon: '📷' },
-    { value: 'traditional-video',    label: 'Traditional Video',    icon: '🎬' },
+  'reception': [
+    { value: 'traditional-photo', label: 'Traditional Photo', icon: '📷' },
+    { value: 'traditional-video', label: 'Traditional Video', icon: '🎬' },
     { value: 'cinematic-highlights', label: 'Cinematic Highlights', icon: '🎥' },
-    { value: 'candid-photo',         label: 'Candid Photography',   icon: '📸' },
-    { value: 'drone',                label: 'Drone Coverage',       icon: '🚁' },
+    { value: 'candid-photo', label: 'Candid Photography', icon: '📸' },
+    { value: 'drone', label: 'Drone Coverage', icon: '🚁' },
   ],
   // Standalone events
-  'birthday':   [
-    { value: 'traditional-photo', label: 'Traditional Photo',   icon: '📷' },
-    { value: 'traditional-video', label: 'Traditional Video',   icon: '🎬' },
-    { value: 'cinematic-video',   label: 'Cinematic Video',     icon: '🎥' },
-    { value: 'candid-photo',      label: 'Candid Photo',        icon: '📸' },
-    { value: 'drone',             label: 'Drone',               icon: '🚁' },
+  'birthday': [
+    { value: 'traditional-photo', label: 'Traditional Photo', icon: '📷' },
+    { value: 'traditional-video', label: 'Traditional Video', icon: '🎬' },
+    { value: 'cinematic-video', label: 'Cinematic Video', icon: '🎥' },
+    { value: 'candid-photo', label: 'Candid Photo', icon: '📸' },
+    { value: 'drone', label: 'Drone', icon: '🚁' },
   ],
   'half-saree': [
-    { value: 'traditional-photo', label: 'Traditional Photo',   icon: '📷' },
-    { value: 'traditional-video', label: 'Traditional Video',   icon: '🎬' },
-    { value: 'cinematic-video',   label: 'Cinematic Video',     icon: '🎥' },
-    { value: 'candid-photo',      label: 'Candid Photo',        icon: '📸' },
-    { value: 'drone',             label: 'Drone',               icon: '🚁' },
+    { value: 'traditional-photo', label: 'Traditional Photo', icon: '📷' },
+    { value: 'traditional-video', label: 'Traditional Video', icon: '🎬' },
+    { value: 'cinematic-video', label: 'Cinematic Video', icon: '🎥' },
+    { value: 'candid-photo', label: 'Candid Photo', icon: '📸' },
+    { value: 'drone', label: 'Drone', icon: '🚁' },
   ],
   'seemantham': [
-    { value: 'traditional-photo', label: 'Traditional Photo',   icon: '📷' },
-    { value: 'traditional-video', label: 'Traditional Video',   icon: '🎬' },
-    { value: 'cinematic-video',   label: 'Cinematic Video',     icon: '🎥' },
-    { value: 'candid-photo',      label: 'Candid Photo',        icon: '📸' },
-    { value: 'drone',             label: 'Drone',               icon: '🚁' },
+    { value: 'traditional-photo', label: 'Traditional Photo', icon: '📷' },
+    { value: 'traditional-video', label: 'Traditional Video', icon: '🎬' },
+    { value: 'cinematic-video', label: 'Cinematic Video', icon: '🎥' },
+    { value: 'candid-photo', label: 'Candid Photo', icon: '📸' },
+    { value: 'drone', label: 'Drone', icon: '🚁' },
   ],
-  'corporate':  [
-    { value: 'traditional-photo', label: 'Traditional Photo',   icon: '📷' },
-    { value: 'traditional-video', label: 'Traditional Video',   icon: '🎬' },
-    { value: 'cinematic-video',   label: 'Cinematic Video',     icon: '🎥' },
-    { value: 'candid-photo',      label: 'Candid Photo',        icon: '📸' },
-    { value: 'drone',             label: 'Drone',               icon: '🚁' },
+  'corporate': [
+    { value: 'traditional-photo', label: 'Traditional Photo', icon: '📷' },
+    { value: 'traditional-video', label: 'Traditional Video', icon: '🎬' },
+    { value: 'cinematic-video', label: 'Cinematic Video', icon: '🎥' },
+    { value: 'candid-photo', label: 'Candid Photo', icon: '📸' },
+    { value: 'drone', label: 'Drone', icon: '🚁' },
   ],
-  'other':      [
-    { value: 'traditional-photo', label: 'Traditional Photo',   icon: '📷' },
-    { value: 'traditional-video', label: 'Traditional Video',   icon: '🎬' },
-    { value: 'cinematic-video',   label: 'Cinematic Video',     icon: '🎥' },
-    { value: 'candid-photo',      label: 'Candid Photo',        icon: '📸' },
-    { value: 'drone',             label: 'Drone',               icon: '🚁' },
+  'other': [
+    { value: 'traditional-photo', label: 'Traditional Photo', icon: '📷' },
+    { value: 'traditional-video', label: 'Traditional Video', icon: '🎬' },
+    { value: 'cinematic-video', label: 'Cinematic Video', icon: '🎥' },
+    { value: 'candid-photo', label: 'Candid Photo', icon: '📸' },
+    { value: 'drone', label: 'Drone', icon: '🚁' },
   ],
 };
-
-const BUDGET_RANGES = [
-  'Under ₹25,000',
-  '₹25,000 – ₹50,000',
-  '₹50,000 – ₹1,00,000',
-  '₹1,00,000 – ₹2,00,000',
-  'Above ₹2,00,000',
-];
 
 const STEPS = ['Details', 'Event', 'Services', 'Review'];
 
@@ -131,13 +123,13 @@ const QuotationForm = () => {
   const [formData, setFormData] = useState({
     fullName: '', email: '', phone: '',
     eventType: '',
-    subEvents: [],          
-    eventDates: {}, eventTimes: {}, 
-    servicesByKey: {}, 
+    subEvents: [],
+    eventDates: {}, eventTimes: {},
+    servicesByKey: {},
     specialRequests: '',
     referenceImages: [],
   });
-  const [loading, setLoading]     = useState(false);
+  const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
@@ -147,7 +139,7 @@ const QuotationForm = () => {
 
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
 
-  const isWedding     = formData.eventType === 'wedding';
+  const isWedding = formData.eventType === 'wedding';
   const selectedEvent = EVENT_TYPES.find(e => e.value === formData.eventType);
 
   const serviceKeys = isWedding
@@ -224,39 +216,39 @@ const QuotationForm = () => {
           const fd = new FormData();
           fd.append('file', file);
           fd.append('upload_preset', UPLOAD_PRESET);
-          
+
           const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
             method: 'POST',
             body: fd,
           });
-          
+
           if (!res.ok) {
             throw new Error('Failed to upload image to Cloudinary');
           }
-          
+
           const data = await res.json();
           return data.secure_url;
         })
       );
 
       await addDoc(collection(db, 'quotations'), {
-        fullName:        formData.fullName,
-        email:           formData.email,
-        phone:           formData.phone,
-        eventType:       formData.eventType,
-        subEvents:       formData.subEvents,
-        eventDates:      formData.eventDates,
-        eventTimes:      formData.eventTimes,
-        servicesByKey:   formData.servicesByKey,
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        eventType: formData.eventType,
+        subEvents: formData.subEvents,
+        eventDates: formData.eventDates,
+        eventTimes: formData.eventTimes,
+        servicesByKey: formData.servicesByKey,
         specialRequests: formData.specialRequests,
         referenceImages: imageUrls,
-        submittedAt:     new Date(),
-        status:          'pending',
+        submittedAt: new Date(),
+        status: 'pending',
       });
-      
+
       // Auto-download PDF on success
       generatePDF();
-      
+
       setSubmitted(true);
     } catch (err) {
       console.error(err);
@@ -268,37 +260,37 @@ const QuotationForm = () => {
 
   const generatePDF = () => {
     const doc = new jsPDF();
-    
+
     doc.setFontSize(22);
     doc.setTextColor(184, 146, 74); // Gold
     doc.text('Nayanam Stories - Quote Request', 14, 22);
-    
+
     doc.setFontSize(11);
     doc.setTextColor(60, 60, 60);
     doc.text(`Name: ${formData.fullName}`, 14, 34);
     doc.text(`Phone: ${formData.phone}`, 14, 40);
     doc.text(`Email: ${formData.email}`, 14, 46);
-    
+
     const eventName = EVENT_TYPES.find(e => e.value === formData.eventType)?.label || formData.eventType;
     doc.text(`Event Category: ${eventName}`, 14, 56);
-    
+
     let y = 66;
-    
+
     const tableData = [];
     serviceKeys.forEach(key => {
       const keyLabel = isWedding
         ? WEDDING_SUB_EVENTS.find(s => s.value === key)?.label
         : EVENT_TYPES.find(e => e.value === key)?.label || key;
-      
+
       const svcs = formData.servicesByKey[key] || [];
       const svcLabels = svcs.map(sv => (SERVICES_MAP[key] || []).find(s => s.value === sv)?.label).filter(Boolean).join(', ');
-      
+
       const date = formData.eventDates[key] || 'N/A';
       const time = formData.eventTimes[key] || 'N/A';
-      
+
       tableData.push([keyLabel || key, svcLabels || 'None', date, time]);
     });
-    
+
     autoTable(doc, {
       startY: y,
       head: [['Event / Sub-Event', 'Services Required', 'Date', 'Time']],
@@ -307,26 +299,26 @@ const QuotationForm = () => {
       headStyles: { fillColor: [184, 146, 74] }, // Nayanam Gold
       styles: { fontSize: 10 }
     });
-    
+
     const finalY = doc.lastAutoTable.finalY || y;
-    
+
     if (formData.specialRequests) {
       doc.setFontSize(12);
       doc.setTextColor(184, 146, 74);
       doc.text('Special Requests:', 14, finalY + 12);
-      
+
       doc.setFontSize(10);
       doc.setTextColor(80, 80, 80);
       const splitText = doc.splitTextToSize(formData.specialRequests, 180);
       doc.text(splitText, 14, finalY + 18);
     }
-    
+
     doc.save(`Nayanam_Quote_${formData.fullName.replace(/\s+/g, '_')}.pdf`);
   };
 
   const Check = () => (
     <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
-      <path d="M1 3.5L3.5 6L8 1" stroke="#1a1714" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M1 3.5L3.5 6L8 1" stroke="#1a1714" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 
@@ -395,13 +387,13 @@ const QuotationForm = () => {
         <div className="qf-success-card">
           <div className="qf-success-icon">
             <svg width="22" height="16" viewBox="0 0 22 16" fill="none">
-              <path d="M2 8L8.5 14L20 2" stroke="#97c459" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 8L8.5 14L20 2" stroke="#97c459" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
           <div className="qf-success-brand">Nayanam Stories</div>
           <h2 className="qf-success-title">Thank You!</h2>
           <p className="qf-success-body">
-            Thank you for choosing Nayanam Stories.<br/>
+            Thank you for choosing Nayanam Stories.<br />
             Let’s create beautiful memories together.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -426,7 +418,7 @@ const QuotationForm = () => {
         </button>
         <div className="qf-eyebrow">Welcome to Nayanam Stories</div>
         <h1 className="qf-hero-title">Nayanam <em>Stories</em></h1>
-        <p className="qf-hero-sub">Creative Wedding &amp; Event Photography<br/>Choose your event and build your photography package.</p>
+        <p className="qf-hero-sub">Creative Wedding &amp; Event Photography<br />Choose your event and build your photography package.</p>
         <div className="qf-hero-links">
           <a href="https://harikrishnamamidala146.wfolio.pro/disk/portfolio" target="_blank" rel="noopener noreferrer">Portfolio</a>
           <a href="https://www.instagram.com/nayanam.stories?igsh=bDM2YnB0aGYyNWt1" target="_blank" rel="noopener noreferrer">Instagram</a>
@@ -461,14 +453,14 @@ const QuotationForm = () => {
                   <div className="qf-field">
                     <label className="qf-label">Email Address *</label>
                     <input className="qf-input" type="email" name="email"
-                      value={formData.email} onChange={handleInput} placeholder="you@example.com" />
+                      value={formData.email} onChange={handleInput} placeholder="you@example.com" required />
                   </div>
                 </div>
                 <div className="qf-grid-1">
                   <div className="qf-field">
                     <label className="qf-label">Phone Number *</label>
                     <input className="qf-input" type="tel" name="phone"
-                      value={formData.phone} maxLength={10} onChange={handleInput} placeholder="+91 98765 43210" />
+                      required value={formData.phone} maxLength={10} onChange={handleInput} placeholder="+91 98765 43210" />
                   </div>
                 </div>
               </>

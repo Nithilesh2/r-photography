@@ -725,7 +725,6 @@ body {
   border-radius: 2px;
   padding: 0.45rem 0.85rem;
   font-family: var(--mono);
-  /* font-size: 0.7rem; */
   color: var(--cream);
   outline: none;
   appearance: none;
@@ -946,10 +945,6 @@ body {
   .ad-body   { padding: 1.25rem; }
   .ad-nav    { padding: 1rem; }
 }
-
-/* ════════════════════════════════════════════
-   ADMIN DASHBOARD — LIGHT THEME OVERRIDES
-   ════════════════════════════════════════════ */
 
 [data-theme="light"] .ad-page {
   background: var(--cream);
