@@ -8,7 +8,7 @@ import autoTable from 'jspdf-autotable';
 const EVENT_TYPES = [
   { value: 'wedding', label: 'Wedding', icon: '💍' },
   { value: 'birthday', label: 'Birthday', icon: '🎂' },
-  { value: 'half-saree', label: 'Half Saree / Dothi Ceremony', icon: '🌸' },
+  { value: 'half-saree/dothi-ceremony', label: 'Half Saree / Dothi Ceremony', icon: '🌸' },
   { value: 'seemantham', label: 'Seemantham', icon: '🪷' },
   { value: 'corporate', label: 'Corporate Events', icon: '💼' },
   { value: 'other', label: 'Other Events', icon: '✨' },
@@ -296,7 +296,7 @@ const QuotationForm = () => {
       head: [['Event / Sub-Event', 'Services Required', 'Date', 'Time']],
       body: tableData,
       theme: 'grid',
-      headStyles: { fillColor: [184, 146, 74] }, // Nayanam Gold
+      headStyles: { fillColor: [184, 146, 74] },
       styles: { fontSize: 10 }
     });
 
@@ -322,7 +322,6 @@ const QuotationForm = () => {
     </svg>
   );
 
-  /* ── ServiceBlock: reusable services selector for one event key ── */
   const ServiceBlock = React.memo(({ eventKey, title, selected, eventDate, eventTime, onToggleService, onSetDate, onSetTime }) => {
     const services = SERVICES_MAP[eventKey] || [];
     const dateRef = useRef();
